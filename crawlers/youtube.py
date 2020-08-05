@@ -9,16 +9,16 @@ import googleapiclient.discovery
 
 from utility.files import WriteableDir, write_results
 
+yt_api_service_name = "youtube"
+yt_api_version = "v3"
+api_key = "AIzaSyApZSllh8X0aggJ_qyXliX2yDiQU_9fgeA"
+
+print("Discovering YouTube service")
+youtube = googleapiclient.discovery.build(
+    yt_api_service_name, yt_api_version, developerKey=api_key)
+
 
 def get_top_music(pages=1):
-    yt_api_service_name = "youtube"
-    yt_api_version = "v3"
-    api_key = "AIzaSyAtP9jw47mwQ-MKpmsHLGWI7IaEHN84CFA"
-
-    print("Discovering YouTube service")
-    youtube = googleapiclient.discovery.build(
-        yt_api_service_name, yt_api_version, developerKey=api_key)
-
     regions = ['US', 'GB', 'AU', 'CA']
 
     result = []
@@ -29,7 +29,7 @@ def get_top_music(pages=1):
         for i in range(pages):
             print("Fetching page No:", i + 1)
             request = youtube.videos().list(
-                part="snippet,contentDetails,statistics",
+                part="snippet,statistics",
                 chart="mostPopular",
                 regionCode=region,
                 videoCategoryId="10",
