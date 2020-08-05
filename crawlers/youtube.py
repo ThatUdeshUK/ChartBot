@@ -9,16 +9,15 @@ import googleapiclient.discovery
 
 from utility.files import WriteableDir, write_results
 
-yt_api_service_name = "youtube"
-yt_api_version = "v3"
-api_key = "AIzaSyApZSllh8X0aggJ_qyXliX2yDiQU_9fgeA"
 
-print("Discovering YouTube service")
-youtube = googleapiclient.discovery.build(
-    yt_api_service_name, yt_api_version, developerKey=api_key)
+def get_top_music(api_key, pages=1):
+    yt_api_service_name = "youtube"
+    yt_api_version = "v3"
 
+    print("Discovering YouTube service")
+    youtube = googleapiclient.discovery.build(
+        yt_api_service_name, yt_api_version, developerKey=api_key)
 
-def get_top_music(pages=1):
     regions = ['US', 'GB', 'AU', 'CA']
 
     result = []
@@ -69,13 +68,13 @@ def get_top_music(pages=1):
     sorted_videos = sorted(map(lambda x: x[1], agg_videos.items()),
                            key=lambda x: (x['count'], x['data']['statistics']['viewCount']), reverse=True)
     print(len(sorted_videos))
-    return sorted_videos[0: 50]
+    return sorted_videos
 
 
-def run(dataset_dir):
+def run(dataset_dir, api_key):
     youtube_path = dataset_dir + '/youtube.json'
 
-    videos = get_top_music(pages=1)
+    videos = get_top_music(api_key, pages=2)
     write_results(youtube_path, videos)
 
 
@@ -84,13 +83,16 @@ def main(arguments):
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
 
+    parser.add_argument('-a', '--apikey', help="YouTube Data API key")
     parser.add_argument('dir', help="Dataset directory",
                         action=WriteableDir, default='.')
 
     args = parser.parse_args(arguments)
 
+    api_key = args.apikey
     dataset_dir = args.dir
-    run(dataset_dir)
+
+    run(dataset_dir, api_key)
 
 
 if __name__ == '__main__':
