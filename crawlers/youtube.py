@@ -3,10 +3,12 @@
 """Get trending music videos from YouTube Data API.
 """
 
+import os
 import sys
 import argparse
 import googleapiclient.discovery
 
+sys.path.append(os.path.dirname(__file__) + "/..")
 from utility.files import WriteableDir, write_results
 
 
@@ -18,7 +20,7 @@ def get_top_music(api_key, pages=1):
     youtube = googleapiclient.discovery.build(
         yt_api_service_name, yt_api_version, developerKey=api_key)
 
-    regions = ['US', 'GB', 'AU', 'CA']
+    regions = ['US', 'GB', 'AU', 'CA', 'AW', 'BE', 'SE']
 
     result = []
 
@@ -28,7 +30,7 @@ def get_top_music(api_key, pages=1):
         for i in range(pages):
             print("Fetching page No:", i + 1)
             request = youtube.videos().list(
-                part="snippet,statistics",
+                part="snippet,statistics,contentDetails",
                 chart="mostPopular",
                 regionCode=region,
                 videoCategoryId="10",
@@ -37,13 +39,15 @@ def get_top_music(api_key, pages=1):
             )
 
             response = request.execute()
-            print(response['nextPageToken'])
-            page_token = response['nextPageToken']
+            if 'nextPageToken' in response:
+                print(response['nextPageToken'])
+                page_token = response['nextPageToken']
             result.extend(response['items'])
 
     def mapper(video):
         return {
             'id': video['id'],
+            'duration': video['contentDetails']['duration'],
             'title': video['snippet']['title'],
             'publishedAt': video['snippet']['publishedAt'],
             'channelId': video['snippet']['channelId'],

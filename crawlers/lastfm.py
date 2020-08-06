@@ -3,11 +3,13 @@
 """Get charts from Last.FM API.
 """
 
+import os
 import sys
 import argparse
 import requests
 import json
 
+sys.path.append(os.path.dirname(__file__) + "/..")
 from utility.files import WriteableDir, write_results
 
 last_fm_base_url = 'http://ws.audioscrobbler.com/2.0/'

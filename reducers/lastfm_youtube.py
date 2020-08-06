@@ -9,6 +9,7 @@ import argparse
 import json
 from fuzzysearch import find_near_matches
 
+sys.path.append(os.path.dirname(__file__) + "/..")
 from utility.files import WriteableDir, write_results
 
 

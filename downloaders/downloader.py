@@ -9,7 +9,8 @@ import argparse
 import json
 import pafy
 
-from utility.files import WriteableDir, create_if_not_exist
+sys.path.append(os.path.dirname(__file__) + "/..")
+from utility.files import WriteableDir
 
 youtube_video_url = 'https://www.youtube.com/watch?v='
 
@@ -30,7 +31,6 @@ def download(youtube, video_path):
             stream.download(video_path + video['id'] + '.mp4')
         else:
             skipped += 1
-        break
 
 
 def run(dataset_dir):

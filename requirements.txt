@@ -6,3 +6,4 @@ requests
 fuzzysearch
 pafy
 youtube-dl
+ffmpeg-python
