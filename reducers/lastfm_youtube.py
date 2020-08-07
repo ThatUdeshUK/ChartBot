@@ -18,11 +18,11 @@ def summarize(youtube, lastfm):
     for lastfm_track in lastfm:
         has_match = False
         for yt_track in youtube:
-            lastfm_str = lastfm_track['name'].lower()
+            lastfm_str = lastfm_track['title'].lower()
             yt_str = yt_track['data']['title'].lower()
             matched = find_near_matches(lastfm_str, yt_str, max_l_dist=0)
             if len(matched) > 0:
-                print(lastfm_track['name'], "<>", yt_track['data']['title'])
+                print(lastfm_track['title'], "<>", yt_track['data']['title'])
                 has_match = True
                 yt_track['count'] += 1
         if has_match:

@@ -34,22 +34,25 @@ def trim(top, video_path, forced=False):
         video_out_path = video_path + video['id'] + '_trimmed.mp4'
         if forced or not os.access(video_out_path, os.R_OK):
             video_file_path = video_path + video['id'] + '.mp4'
-            start_time = duration_to_start(video['data']['duration'])
-            command = "ffmpeg -y -i " + video_file_path + " -ss  " + start_time + " -t " + str(
-                10) + " -vf \"scale=-1:360,pad=640:ih:(ow-iw)/2\" " + video_out_path
-            os.system(command)
+            if os.access(video_file_path, os.R_OK):
+                start_time = duration_to_start(video['data']['duration'])
+                command = "ffmpeg -y -i " + video_file_path + " -ss  " + start_time + " -t " + str(
+                    10) + " -vf \"scale=-1:360,pad=640:ih:(ow-iw)/2\" " + video_out_path
+                os.system(command)
         else:
             print("Trimmed file exists")
 
 
-def concat(top, video_path, limit=40):
+def concat(top, video_path, limit=20):
     top_videos = []
 
     count = 0
     for top_video in top:
         top_video_path = video_path + top_video['id'] + '_trimmed.mp4'
         if os.access(top_video_path, os.R_OK) and os.path.getsize(top_video_path) > 10:
-            top_videos.append(top_video_path)
+            top_video['path'] = top_video_path
+            top_video['pos'] = count + 1
+            top_videos.append(top_video)
             count += 1
         if count >= limit:
             break
@@ -57,8 +60,22 @@ def concat(top, video_path, limit=40):
         print("Not enough videos to make a chart")
 
     top_videos.reverse()
-    video_files = map(lambda x: ffmpeg.input(x), top_videos)
-    split_streams = map(lambda x: [x.video, x.audio], video_files)
+
+    def mapper(video):
+        video_input = ffmpeg.input(video['path'])
+
+        def gen_title(title):
+            return title.split("(")[0]
+
+        video_video = video_input.video \
+            .drawtext(text=str(video['pos']), x=40, y=260, box=1, boxborderw=8, boxcolor='red') \
+            .drawtext(text=gen_title(video['data']['title']), x=40, y=290, box=1, boxborderw=8)
+
+        video_audio = video_input.audio
+
+        return [video_video, video_audio]
+
+    split_streams = map(mapper, top_videos)
 
     streams = list(chain.from_iterable(split_streams))
 

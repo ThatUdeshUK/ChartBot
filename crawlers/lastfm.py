@@ -26,8 +26,8 @@ def get_global_chart(api_key):
 
     def mapper(track):
         return {
-            'name': track['name'],
-            'play_count': track['name'],
+            'title': track['name'],
+            'play_count': track['playcount'],
             'artist': track['artist']['name']
         }
 
