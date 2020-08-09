@@ -64,10 +64,10 @@ def run(dataset_dir, api_key):
 
     youtube.set_api_key(api_key)
 
+    create_if_not_exist(reduced_path, {})
+
     with open(reduced_path, 'r') as json_data:
         reduced_data = json.load(json_data)
-
-    create_if_not_exist(reduced_path, {})
 
     if os.access(youtube_path, os.R_OK):
         with open(youtube_path, 'r') as json_data:

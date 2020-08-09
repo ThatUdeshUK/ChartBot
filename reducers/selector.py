@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-"""Download reduced YouTube videos.
+"""Compile a chart by scoring and selecting tracks.
 """
 
 import os
@@ -10,44 +10,47 @@ import json
 import pafy
 
 sys.path.append(os.path.dirname(__file__) + "/..")
-from utility.files import WriteableDir
+from utility.files import WriteableDir, write_results
 
-youtube_video_url = 'https://www.youtube.com/watch?v='
+scores = {
+    'yt': 1.5,
+    'lastfm': 2,
+    'at40': 3,
+    'uk40': 3,
+}
 
 
-def download(youtube, video_path):
-    top_videos = youtube[:50]
-
-    skipped = 0
-
-    for video in top_videos:
-        url = youtube_video_url + video['id']
-        video_data = pafy.new(url)
-        print(video_data)
-        streams = video_data.streams
-        if len(streams) > 0:
-            stream = streams[0]
-            print(stream.get_filesize())
-            stream.download(video_path + video['id'] + '.mp4')
-        else:
-            skipped += 1
+def count(reduced):
+    for video_id, video_data in reduced.items():
+        score = 0
+        if 'pos' in video_data:
+            if 'lastfm' in video_data['pos']:
+                score += (50 - video_data['pos']['lastfm']) * scores['lastfm']
+            if 'at40' in video_data['pos']:
+                score += (50 - video_data['pos']['at40']) * scores['at40']
+            if 'uk40' in video_data['pos']:
+                score += (50 - video_data['pos']['uk40']) * scores['uk40']
+        if 'counts' in video_data:
+            score += video_data['counts']['yt'] * scores['yt']
+        video_data['score'] = score
+    return reduced
 
 
 def run(dataset_dir):
     reduced_path = dataset_dir + '/reduced.json'
-    video_path = dataset_dir + '/videos/'
+    selected_path = dataset_dir + '/selected.json'
 
     if not os.access(reduced_path, os.R_OK):
         print("Dataset required from URL extraction is not available on the given directory")
         return
 
-    if not os.path.exists(video_path):
-        os.makedirs(video_path)
-
     with open(reduced_path, 'r') as json_data:
-        youtube = json.load(json_data)
+        reduced = json.load(json_data)
 
-    download(youtube, video_path)
+    scored = count(reduced)
+    selected = sorted(map(lambda x: x[1], scored.items()), key=lambda x: x['score'], reverse=True)[0:40]
+
+    write_results(selected_path, selected)
 
 
 def main(arguments):
@@ -55,14 +58,10 @@ def main(arguments):
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
 
-    parser.add_argument('-a', '--apikey', help="YouTube Data API key")
     parser.add_argument('dir', help="Dataset directory",
                         action=WriteableDir, default='.')
 
     args = parser.parse_args(arguments)
-
-    api_key = args.apikey
-    pafy.set_api_key(api_key)
 
     dataset_dir = args.dir
 

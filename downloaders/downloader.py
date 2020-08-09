@@ -16,25 +16,22 @@ youtube_video_url = 'https://www.youtube.com/watch?v='
 
 
 def download(youtube, video_path):
-    top_videos = youtube[:50]
-
     skipped = 0
-
-    for video in top_videos:
-        url = youtube_video_url + video['id']
+    for video in youtube:
+        url = youtube_video_url + video['data']['id']
         video_data = pafy.new(url)
         print(video_data)
         streams = video_data.streams
         if len(streams) > 0:
             stream = streams[0]
             print(stream.get_filesize())
-            stream.download(video_path + video['id'] + '.mp4')
+            stream.download(video_path + video['data']['id'] + '.mp4')
         else:
             skipped += 1
 
 
 def run(dataset_dir):
-    reduced_path = dataset_dir + '/reduced.json'
+    reduced_path = dataset_dir + '/selected.json'
     video_path = dataset_dir + '/videos/'
 
     if not os.access(reduced_path, os.R_OK):
@@ -55,13 +52,13 @@ def main(arguments):
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
 
-    parser.add_argument('-a', '--apikey', help="YouTube Data API key")
+    parser.add_argument('-y', '--youtube', help="YouTube Data API key")
     parser.add_argument('dir', help="Dataset directory",
                         action=WriteableDir, default='.')
 
     args = parser.parse_args(arguments)
 
-    api_key = args.apikey
+    api_key = args.youtube
     pafy.set_api_key(api_key)
 
     dataset_dir = args.dir

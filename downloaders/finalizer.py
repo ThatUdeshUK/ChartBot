@@ -31,9 +31,9 @@ def trim(top, video_path, forced=False):
     top_videos = top
 
     for video in top_videos:
-        video_out_path = video_path + video['id'] + '_trimmed.mp4'
+        video_out_path = video_path + video['data']['id'] + '_trimmed.mp4'
         if forced or not os.access(video_out_path, os.R_OK):
-            video_file_path = video_path + video['id'] + '.mp4'
+            video_file_path = video_path + video['data']['id'] + '.mp4'
             if os.access(video_file_path, os.R_OK):
                 start_time = duration_to_start(video['data']['duration'])
                 command = "ffmpeg -y -i " + video_file_path + " -ss  " + start_time + " -t " + str(
@@ -48,7 +48,7 @@ def concat(top, video_path, limit=20):
 
     count = 0
     for top_video in top:
-        top_video_path = video_path + top_video['id'] + '_trimmed.mp4'
+        top_video_path = video_path + top_video['data']['id'] + '_trimmed.mp4'
         if os.access(top_video_path, os.R_OK) and os.path.getsize(top_video_path) > 10:
             top_video['path'] = top_video_path
             top_video['pos'] = count + 1
@@ -86,7 +86,7 @@ def concat(top, video_path, limit=20):
 
 
 def run(dataset_dir):
-    reduced_path = dataset_dir + '/reduced.json'
+    reduced_path = dataset_dir + '/selected.json'
     video_path = dataset_dir + '/videos/'
 
     if not os.access(reduced_path, os.R_OK):
