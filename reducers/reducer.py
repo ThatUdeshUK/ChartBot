@@ -76,26 +76,14 @@ def run(dataset_dir, api_key):
         reduced_data = youtube_reduce(reduced_data, youtube_data)
         write_results(reduced_path, reduced_data)
 
-    if os.access(lastfm_path, os.R_OK):
-        with open(lastfm_path, 'r') as json_data:
-            lastfm_data = json.load(json_data)
+    chart_paths = {'lastfm': lastfm_path, 'uk40': uk40_path, 'at40': at40_path}
+    for key, path in chart_paths.items():
+        if os.access(path, os.R_OK):
+            with open(path, 'r') as json_data:
+                data = json.load(json_data)
 
-        reduced_data = chart_reduce(reduced_data, 'lastfm', lastfm_data)
-        write_results(reduced_path, reduced_data)
-
-    if os.access(uk40_path, os.R_OK):
-        with open(uk40_path, 'r') as json_data:
-            uk40_data = json.load(json_data)
-
-        reduced_data = chart_reduce(reduced_data, 'uk40', uk40_data)
-        write_results(reduced_path, reduced_data)
-
-    if os.access(at40_path, os.R_OK):
-        with open(at40_path, 'r') as json_data:
-            at40_data = json.load(json_data)
-
-        reduced_data = chart_reduce(reduced_data, 'at40', at40_data)
-        write_results(reduced_path, reduced_data)
+            reduced_data = chart_reduce(reduced_data, key, data)
+            write_results(reduced_path, reduced_data)
 
 
 def main(arguments):

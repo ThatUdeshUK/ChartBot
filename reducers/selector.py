@@ -7,7 +7,6 @@ import os
 import sys
 import argparse
 import json
-import pafy
 
 sys.path.append(os.path.dirname(__file__) + "/..")
 from utility.files import WriteableDir, write_results
@@ -23,13 +22,11 @@ scores = {
 def count(reduced):
     for video_id, video_data in reduced.items():
         score = 0
+        charts = ['lastfm', 'at40', 'uk40']
         if 'pos' in video_data:
-            if 'lastfm' in video_data['pos']:
-                score += (50 - video_data['pos']['lastfm']) * scores['lastfm']
-            if 'at40' in video_data['pos']:
-                score += (50 - video_data['pos']['at40']) * scores['at40']
-            if 'uk40' in video_data['pos']:
-                score += (50 - video_data['pos']['uk40']) * scores['uk40']
+            for chart in charts:
+                if chart in video_data['pos']:
+                    score += (50 - video_data['pos'][chart]) * scores[chart]
         if 'counts' in video_data:
             score += video_data['counts']['yt'] * scores['yt']
         video_data['score'] = score
