@@ -6,19 +6,15 @@
 import os
 import sys
 import argparse
-import googleapiclient.discovery
 
 sys.path.append(os.path.dirname(__file__) + "/..")
+from sources.youtube_api import YoutubeApi
 from utility.files import WriteableDir, write_results
 
 
-def get_top_music(api_key, pages=1):
-    yt_api_service_name = "youtube"
-    yt_api_version = "v3"
-
-    print("Discovering YouTube service")
-    youtube = googleapiclient.discovery.build(
-        yt_api_service_name, yt_api_version, developerKey=api_key)
+def get_top_music(api_key):
+    youtube = YoutubeApi()
+    youtube.set_api_key(api_key)
 
     regions = ['US', 'GB', 'AU', 'CA', 'AW', 'BE', 'SE']
 
@@ -26,40 +22,14 @@ def get_top_music(api_key, pages=1):
 
     for region in regions:
         print("Fetching top music from region:", region)
-        page_token = ""
-        for i in range(pages):
-            print("Fetching page No:", i + 1)
-            request = youtube.videos().list(
-                part="snippet,statistics,contentDetails",
-                chart="mostPopular",
-                regionCode=region,
-                videoCategoryId="10",
-                maxResults=50,
-                pageToken=page_token
-            )
-
-            response = request.execute()
-            if 'nextPageToken' in response:
-                print(response['nextPageToken'])
-                page_token = response['nextPageToken']
-            result.extend(response['items'])
-
-    def mapper(video):
-        return {
-            'id': video['id'],
-            'duration': video['contentDetails']['duration'],
-            'title': video['snippet']['title'],
-            'publishedAt': video['snippet']['publishedAt'],
-            'channelId': video['snippet']['channelId'],
-            'statistics': video['statistics']
-        }
+        region_chart = youtube.get_top_music(region)
+        result.extend(region_chart)
 
     print(len(result))
 
-    selected = map(mapper, result)
     agg_videos = {}
 
-    for selected_video in selected:
+    for selected_video in result:
         if selected_video['id'] in agg_videos:
             agg_videos[selected_video['id']]['count'] += 1
         else:
@@ -78,7 +48,7 @@ def get_top_music(api_key, pages=1):
 def run(dataset_dir, api_key):
     youtube_path = dataset_dir + '/youtube.json'
 
-    videos = get_top_music(api_key, pages=2)
+    videos = get_top_music(api_key)
     write_results(youtube_path, videos)
 
 
@@ -87,13 +57,13 @@ def main(arguments):
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
 
-    parser.add_argument('-a', '--apikey', help="YouTube Data API key")
+    parser.add_argument('-y', '--youtube', help="YouTube Data API key")
     parser.add_argument('dir', help="Dataset directory",
                         action=WriteableDir, default='.')
 
     args = parser.parse_args(arguments)
 
-    api_key = args.apikey
+    api_key = args.youtube
     dataset_dir = args.dir
 
     run(dataset_dir, api_key)

@@ -9,3 +9,4 @@ youtube-dl
 ffmpeg-python
 beautifulsoup4
 html5lib
+tqdm

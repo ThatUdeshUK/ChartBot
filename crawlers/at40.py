@@ -7,10 +7,11 @@ import os
 import sys
 import argparse
 import requests
-import json
-from bs4 import BeautifulSoup as bs, element
+from bs4 import BeautifulSoup as bs
+from tqdm import tqdm
 
 sys.path.append(os.path.dirname(__file__) + "/..")
+from sources.lastfm_api import LastFMApi
 from utility.files import WriteableDir, write_results
 
 at40_base_url = 'https://www.at40.com/charts/top-40-238/latest/'
@@ -23,24 +24,38 @@ def get_chart():
     chart_items_bs = chart_bs.select('.component-chartlist-item')
 
     chart = []
+    pos = 1
     for item in chart_items_bs:
         title = item.select('.track-title')[0].contents[0]
         artist = item.select('.track-artist')[0].contents[0]
 
         chart.append({
             'title': title.lower(),
-            'artist': artist.lower()
+            'artist': artist.lower(),
+            'pos': pos
         })
+        pos += 1
 
     return chart
 
 
-def run(dataset_dir):
+def run(dataset_dir, api_key):
     at40_path = dataset_dir + '/at40.json'
+
+    lastfm = LastFMApi(api_key)
 
     chart = get_chart()
 
-    write_results(at40_path, chart)
+    searched_chart = []
+    for track in tqdm(chart):
+        trimmed_artist = track['artist'].split(" x ")[0].split(" f/")[0].split(" feat.")[0]
+        print(track['title'], ' - ', trimmed_artist)
+        search_result = lastfm.search_track(track['title'], trimmed_artist)
+        if search_result:
+            search_result['pos'] = track['pos']
+            searched_chart.append(search_result)
+
+    write_results(at40_path, searched_chart)
 
 
 def main(arguments):
@@ -48,14 +63,16 @@ def main(arguments):
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
 
+    parser.add_argument('-l', '--lastfm', help="LastFM API key")
     parser.add_argument('dir', help="Dataset directory",
                         action=WriteableDir, default='.')
 
     args = parser.parse_args(arguments)
 
+    api_key = args.lastfm
     dataset_dir = args.dir
 
-    run(dataset_dir)
+    run(dataset_dir, api_key)
 
 
 if __name__ == '__main__':
