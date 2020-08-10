@@ -8,6 +8,7 @@ import sys
 import argparse
 import json
 import pafy
+import ffmpeg
 
 sys.path.append(os.path.dirname(__file__) + "/..")
 from utility.files import WriteableDir
@@ -19,13 +20,30 @@ def download(youtube, video_path):
     skipped = 0
     for video in youtube:
         url = youtube_video_url + video['data']['id']
+        audio_file_path = video_path + video['data']['id'] + '.audio'
+        video_file_path = video_path + video['data']['id'] + '.video'
+
+        if os.access(audio_file_path, os.R_OK) and os.access(video_file_path, os.R_OK):
+            print("Files exists", video['data']['id'])
+            continue
+
         video_data = pafy.new(url)
         print(video_data)
-        streams = video_data.streams
-        if len(streams) > 0:
-            stream = streams[0]
-            print(stream.get_filesize())
-            stream.download(video_path + video['data']['id'] + '.mp4')
+
+        best_video = list(
+            filter(lambda s: str(s).find('1080') != -1 and str(s).find('mp4') != -1, video_data.videostreams))
+        if len(best_video) > 0:
+            best_video = best_video[0]
+        else:
+            best_video = video_data.getbestvideo('mp4', False)
+
+        best_audio = video_data.getbestaudio()
+        print(best_video, 'X', best_audio)
+
+        if best_audio and best_video:
+            print(best_video.get_filesize())
+            best_audio.download(audio_file_path)
+            best_video.download(video_file_path)
         else:
             skipped += 1
 
