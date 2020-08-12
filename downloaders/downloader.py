@@ -9,6 +9,7 @@ import argparse
 import json
 import pafy
 import ffmpeg
+import youtube_dl
 
 sys.path.append(os.path.dirname(__file__) + "/..")
 from utility.files import WriteableDir
@@ -21,29 +22,39 @@ def download(youtube, video_path):
     for video in youtube:
         url = youtube_video_url + video['data']['id']
         audio_file_path = video_path + video['data']['id'] + '.audio'
-        video_file_path = video_path + video['data']['id'] + '.video'
+        video_file_path = video_path + video['data']['id'] + '.webm'
 
         if os.access(audio_file_path, os.R_OK) and os.access(video_file_path, os.R_OK):
             print("Files exists", video['data']['id'])
             continue
 
-        video_data = pafy.new(url)
+        try:
+            video_data = pafy.new(url)
+        except youtube_dl.utils.ExtractorError:
+            skipped += 1
+            continue
+
         print(video_data)
 
+        print(video_data.videostreams)
+
         best_video = list(
-            filter(lambda s: str(s).find('1080') != -1 and str(s).find('mp4') != -1, video_data.videostreams))
+            filter(lambda s: str(s).find('1080') != -1 and str(s).find('webm') != -1, video_data.videostreams))
         if len(best_video) > 0:
             best_video = best_video[0]
         else:
-            best_video = video_data.getbestvideo('mp4', False)
+            best_video = video_data.getbestvideo('webm', True)
 
         best_audio = video_data.getbestaudio()
         print(best_video, 'X', best_audio)
 
         if best_audio and best_video:
             print(best_video.get_filesize())
-            best_audio.download(audio_file_path)
-            best_video.download(video_file_path)
+            try:
+                best_audio.download(audio_file_path)
+                best_video.download(video_file_path)
+            except youtube_dl.utils.ExtractorError:
+                skipped += 1
         else:
             skipped += 1
 
