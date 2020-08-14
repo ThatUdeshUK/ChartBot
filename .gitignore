@@ -142,3 +142,5 @@ cython_debug/
 
 # Data
 *.json
+intro.mp4
+outro.mp4
